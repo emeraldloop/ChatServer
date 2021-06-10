@@ -45,7 +45,7 @@ namespace ChatClient
         //отправка сообщений
         static void SendMessage()
         {
-            Console.WriteLine("Введите сообщение: ");
+            
 
             while (true)
             {

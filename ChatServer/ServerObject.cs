@@ -10,6 +10,7 @@ namespace ChatServer
 {
     public class ServerObject
     {
+        
         static TcpListener tcpListener; //сервер для прослушивания
         List<ClientObject> clients = new List<ClientObject>(); // все подключения 
         protected internal void AddConnection(ClientObject clientObject)
@@ -38,7 +39,6 @@ namespace ChatServer
                 while (true)
                 {
                     TcpClient tcpClient = tcpListener.AcceptTcpClient();
-
                     ClientObject clientObject = new ClientObject(tcpClient, this);
                     Thread clientThread = new Thread(new ThreadStart(clientObject.Process));
                     clientThread.Start();
@@ -54,6 +54,7 @@ namespace ChatServer
         //трансляция сообщения подключенным клиентам
         protected internal void BroadcastMessage(string message, string id)
         {
+            
             byte[] data = Encoding.Unicode.GetBytes(message);
             for (int i=0;i<clients.Count;i++)
             {
@@ -63,8 +64,23 @@ namespace ChatServer
                 }    
             }
         }
+        protected internal void BroadcastBack(string message, string id)
+        {
+            for (int i = 0; i < clients.Count; i++)
+            {
+                byte[] data = Encoding.Unicode.GetBytes(message);
+
+                if (clients[i].Id == id) // если id клиента равно id отправляющего
+                {
+                    clients[i].Stream.Write(data, 0, data.Length); // передача данных
+                }
+            }
+        }
+
+
+
 // отключение всех клиентов-
-protected internal void Disconnect()
+        protected internal void Disconnect()
         {
             tcpListener.Stop(); // остановка сервера
             for (int i = 0; i<clients.Count;i++)
@@ -73,5 +89,10 @@ protected internal void Disconnect()
             }
             Environment.Exit(0); // завершение процесса
         }
+    
+    
+    
+    
+    
     }
 }
