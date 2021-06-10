@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
 using System.Text;
@@ -9,11 +10,14 @@ namespace ChatServer
 {
     public class ClientObject
     {
+        List<Person> persons = new List <Person>();// список пользователей
         protected internal string Id { get; private set; }
         protected internal NetworkStream Stream { get; private set; }
         string userName;
+        string userGroup;
         TcpClient client;
         ServerObject server;
+        static private int savedUsers = 0;
         static private int k=0;
         public static int K
         { 
@@ -26,20 +30,66 @@ namespace ChatServer
             server = serverObject;
             serverObject.AddConnection(this);
         }
+        private class Person
+        {
+            public string id { get; set; }
+            public string Name { get; set; }
+            public string Group { get; set; }
+
+        }
+         async void saveUser()
+        {
+            // сохранение данных
+            try
+            {   
+                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                {   
+                    Person user = new Person() { id = Id, Name = userName, Group = userGroup };
+                    await JsonSerializer.SerializeAsync<Person>(fs, user);
+                    server.BroadcastBack("Текущий пользователь был сохранен в файл", this.Id);
+                    savedUsers++;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+
+        }
+        async void readUsers() 
+        {
+            // чтение данных
+            try
+            {
+                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                {
+                    
+                    Person restoredPerson = await JsonSerializer.DeserializeAsync<Person>(fs);
+                    server.BroadcastBack($"ID: {restoredPerson.id}  Name: {restoredPerson.Name}  Group: {restoredPerson.Group}\n", this.Id);
+                    server.BroadcastBack("Загрузка окончена", this.Id);
+                }
+            }
+            catch(Exception ex)
+            { 
+                Console.WriteLine(ex);
+            }
+        }
 
         public void Process()
         {
             try
             {
-                Stream = client.GetStream(); //получаем имя пользователя
+                Stream = client.GetStream(); //получаем имя и группу пользователя
                 string message = GetMessage();
                 userName = message;
-                message = userName + " вошел в чат"; //посылаем сообщение о входе в чат всем пользователям
+                message = GetMessage();
+                userGroup = message;
+                message = userGroup + " из группы: "+ userName + " вошел в чат"; //посылаем сообщение о входе в чат всем пользователям
                 server.BroadcastMessage(message, this.Id);
                 Console.WriteLine(message); // в бесконечном цикле получаем сообщения от клиента
                 while (true)
                 {
-                    server.BroadcastBack("Введите сообщение/ команду menu", this.Id);
+                    server.BroadcastBack("\nВведите сообщение/ команду menu", this.Id);
                     try
                     {   
                         message = GetMessage();
@@ -78,7 +128,8 @@ namespace ChatServer
 
         // чтение входящего сообщения и преобразование в строку
         private string GetMessage()
-        {
+        {   
+            
             k++;
             byte[] data = new byte[64]; //буфер для получаемых данных
             StringBuilder builder = new StringBuilder();
@@ -128,7 +179,18 @@ namespace ChatServer
                     server.BroadcastBack(userName + " - имя пользователя", this.Id);
                     break;
                 }
-               
+
+                if (command == "4")
+                {
+                    server.BroadcastBack("1 - сохранение имени пользователя \n2 - чтение имён ", this.Id);
+                    command = GetMessage();
+                    if (command == "1")
+                        saveUser();
+                    if (command == "2")
+                        readUsers();
+                    break;
+                }
+
                 if (command == "5")
                 {
                     server.BroadcastBack("Введите строку для изменения", this.Id);
@@ -140,13 +202,6 @@ namespace ChatServer
                 }
             }
         }
-
         
-
-
-
-
-
-
     }
 }
