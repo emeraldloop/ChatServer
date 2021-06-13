@@ -4,7 +4,7 @@ using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
+
 
 namespace ChatServer
 {
@@ -13,15 +13,16 @@ namespace ChatServer
         List<Person> persons = new List <Person>();// список пользователей
         protected internal string Id { get; private set; }
         protected internal NetworkStream Stream { get; private set; }
+        Menu menu;
         string userName;
         string userGroup;
         TcpClient client;
         ServerObject server;
-        static private int savedUsers = 0;
-        static private int k=0;
+        static private int k=0; //счетчик запросов
         public static int K
         { 
             get { return k; }
+            set { k = value; }
         }
         public ClientObject(TcpClient tcpClient, ServerObject serverObject)
         {   
@@ -30,13 +31,7 @@ namespace ChatServer
             server = serverObject;
             serverObject.AddConnection(this);
         }
-        private class Person
-        {
-            public string id { get; set; }
-            public string Name { get; set; }
-            public string Group { get; set; }
-
-        }
+       
          async void saveUser()
         {
             // сохранение данных
@@ -46,8 +41,7 @@ namespace ChatServer
                 {   
                     Person user = new Person() { id = Id, Name = userName, Group = userGroup };
                     await JsonSerializer.SerializeAsync<Person>(fs, user);
-                    server.BroadcastBack("Текущий пользователь был сохранен в файл", this.Id);
-                    savedUsers++;
+                    server.BroadcastBack("Текущий пользователь был сохранен в файл", this.Id);                    
                 }
             }
             catch (Exception ex)
@@ -95,7 +89,7 @@ namespace ChatServer
                         message = GetMessage();
                         if (message == "menu") // команды
                         {
-                            menu();
+                            menu.choosecommand(server,client,this.Id,userName);
                         }
                         else  //чат
                         {
@@ -127,7 +121,7 @@ namespace ChatServer
         }
 
         // чтение входящего сообщения и преобразование в строку
-        private string GetMessage()
+        public string GetMessage()
         {   
             
             k++;
@@ -153,55 +147,49 @@ namespace ChatServer
             if (client != null)
                 client.Close();
         }
-        private void menu()
+        /*private void menuuu()
         {   
             server.BroadcastBack("Введите команду", this.Id);
 
             while (true)
             {
                 string command = GetMessage();
+                switch (command)
+                {
+                    case "1":
+                        command = String.Format("{0}: - число запросов", k);
+                        Console.WriteLine(command);
+                        server.BroadcastBack(command, this.Id);
+                        break;
+                    case "2":
+                        k = 0;
+                        break;
+                    case "3":
+                        server.BroadcastBack(userName + " - имя пользователя", this.Id);
+                        break;
+                    case "4":
+                        server.BroadcastBack("1 - сохранение имени пользователя \n2 - чтение имён ", this.Id);
+                        command = GetMessage();
+                        if (command == "1")
+                            saveUser();
+                        if (command == "2")
+                            readUsers();
+                        break;
+                    case "5":
+                        server.BroadcastBack("Введите строку для изменения", this.Id);
+                        char[] array = GetMessage().ToCharArray();
+                        Array.Reverse(array);
+                        string str = new string(array);
+                        server.BroadcastBack(str, this.Id);
+                        break;
+                    case "6":
+                        server.BroadcastBack(ServerObject.ConnectedUsers.ToString()+" - число подключенных пользователей", this.Id);
+                        break;
+                 
 
-                if (command == "1")
-                {
-                    command = String.Format("{0}: - число запросов", k);
-                    Console.WriteLine(command);
-                    server.BroadcastBack(command, this.Id);
-                    break;
-                }
-
-                if (command == "2")
-                {
-                    k = 0;
-                    break;
-                }
-                if (command == "3")
-                {
-                    server.BroadcastBack(userName + " - имя пользователя", this.Id);
-                    break;
-                }
-
-                if (command == "4")
-                {
-                    server.BroadcastBack("1 - сохранение имени пользователя \n2 - чтение имён ", this.Id);
-                    command = GetMessage();
-                    if (command == "1")
-                        saveUser();
-                    if (command == "2")
-                        readUsers();
-                    break;
-                }
-
-                if (command == "5")
-                {
-                    server.BroadcastBack("Введите строку для изменения", this.Id);
-                    char[] array = GetMessage().ToCharArray();
-                    Array.Reverse(array);
-                    string str = new string(array);
-                    server.BroadcastBack(str, this.Id);
-                    break;
                 }
             }
-        }
+        } */
         
     }
 }

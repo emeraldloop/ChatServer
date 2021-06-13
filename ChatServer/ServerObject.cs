@@ -5,17 +5,27 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Globalization;
 
 namespace ChatServer
 {
     public class ServerObject
     {
-        
         static TcpListener tcpListener; //сервер для прослушивания
-        List<ClientObject> clients = new List<ClientObject>(); // все подключения 
+        List<ClientObject> clients = new List<ClientObject>(); // все подключения
+        static private int connectedUsers = 0; //счетчик подключенных клиентов (в данный момент)
+        static public int ConnectedUsers
+        {
+            get
+            {
+                return connectedUsers;
+            }
+        }
+        public static DateTime Now { get; }
         protected internal void AddConnection(ClientObject clientObject)
         {
             clients.Add(clientObject);
+            connectedUsers++;
         }
         protected internal void RemoveConnection(string id)
         {
@@ -25,7 +35,7 @@ namespace ChatServer
             // и удалеяем его из списка подключений 
             if (client != null)
                 clients.Remove(client);
-            
+            connectedUsers--;
         }
         // прослушивание входящих подключений
         protected internal void Listen()
