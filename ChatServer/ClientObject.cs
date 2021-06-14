@@ -10,10 +10,9 @@ namespace ChatServer
 {
     public class ClientObject
     {
-        List<Person> persons = new List <Person>();// список пользователей
+        private Menu menu;
         protected internal string Id { get; private set; }
-        protected internal NetworkStream Stream { get; private set; }
-        Menu menu;
+        public NetworkStream Stream { get; set; }
         string userName;
         string userGroup;
         TcpClient client;
@@ -78,18 +77,19 @@ namespace ChatServer
                 userName = message;
                 message = GetMessage();
                 userGroup = message;
-                message = userGroup + " из группы: "+ userName + " вошел в чат"; //посылаем сообщение о входе в чат всем пользователям
+                message = userName + " из группы: "+ userGroup + " вошел в чат"; //посылаем сообщение о входе в чат всем пользователям
                 server.BroadcastMessage(message, this.Id);
-                Console.WriteLine(message); // в бесконечном цикле получаем сообщения от клиента
+                Console.WriteLine(message); // в бесконечном цикле получаем сообщения от клиента                
                 while (true)
                 {
+                    //string Id, string userName, string userGroup, ref ServerObject server, ref TcpClient client, ref NetworkStream Stream
                     server.BroadcastBack("\nВведите сообщение/ команду menu", this.Id);
                     try
                     {   
                         message = GetMessage();
                         if (message == "menu") // команды
                         {
-                            menu.choosecommand(server,client,this.Id,userName);
+                            menu.choosecommand( Id,userName, userGroup, ref server, ref client, Stream);
                         }
                         else  //чат
                         {
