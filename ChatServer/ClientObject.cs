@@ -10,7 +10,7 @@ namespace ChatServer
 {
     public class ClientObject
     {
-        private Menu menu;
+        Menu menu = new();
         protected internal string Id { get; private set; }
         public NetworkStream Stream { get; set; }
         string userName;

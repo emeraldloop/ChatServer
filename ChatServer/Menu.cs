@@ -69,8 +69,9 @@ namespace ChatServer
 
 
                     }
-
+                
                 }
+                server.RemoveConnection(Client.Id);
             }
             catch (Exception ex)
             { Console.WriteLine(ex); }
