@@ -9,24 +9,18 @@ namespace ChatServer
 {
     class Menu
     {
-        //ServerObject server, TcpClient client, string Id, string userName,string userGroup
-        /*public string Id { get; set; }
-        public string userName { get; set; }
-        public string userGroup { get; set; }
-        public ServerObject server { get; set; }
-        public TcpClient client { get; set; }
-        public NetworkStream Stream { get; set; }*/
+
         public void choosecommand(string Id, string userName, string userGroup, ref ServerObject server, ref TcpClient client, NetworkStream Stream)
         {
             try
             {
                 ClientObject Client = new ClientObject(client, server);
-                Utilities utility = new Utilities() { server = server, userName = userName, userGroup = userGroup, Id = Id };
+                Utilities utility = new();
                 server.BroadcastBack("Введите команду", Id);
                 bool complete = false;
                 while (complete != true)
                 {
-                    Client.Stream = Stream;
+                    Client.Stream = Stream; 
                     string command = Client.GetMessage();
                     switch (command)
                     {
@@ -49,9 +43,20 @@ namespace ChatServer
                             server.BroadcastBack("1 - сохранение имени пользователя \n2 - чтение имён ", Id);
                             command = Client.GetMessage();
                             if (command == "1")
-                                utility.saveUser();
+                            {
+                                utility.saveUser(Id,userName,userGroup);
+                                server.BroadcastBack("Текущий пользователь был сохранен в файл", Id);
+                            }
                             if (command == "2")
-                                utility.readUsers();
+                            {   
+                                
+                                utility.takeUsers();
+                                foreach (Person p in utility.Users2read.Values)
+                                {
+                                    server.BroadcastBack(String.Format($"Имя: {1}, Группа: {2}\n", p.Name, p.Group), Id);
+                                }
+                                server.BroadcastBack("Загрузка окончена \n", Id);
+                            }
                             complete = true;
                             break;
                         case "5":

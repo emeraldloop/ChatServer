@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -10,21 +11,36 @@ namespace ChatServer
 {
     class Utilities
     {
-        public string Id { get; set; }
-        public string userName { get; set; }
-        public string userGroup { get; set; }
-        public ServerObject server { get; set; }
-        //ServerObject server, string Id, string userName, string userGroup
-        async public void saveUser()
+        public Dictionary<string, Person> Users2read = new();
+        async public void saveUser(string Id, string userName,string userGroup)
         {
-            // сохранение данных
+            Dictionary<string, Person> restoredUsers = new();
+
+
+            // сохранение данных в файл
             try
             {
-                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                if (File.Exists("user.json"))
                 {
-                    Person user = new Person() { id = Id, Name = userName, Group = userGroup };
-                    await JsonSerializer.SerializeAsync<Person>(fs, user);
-                    server.BroadcastBack("Текущий пользователь был сохранен в файл", Id);
+                    using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                    {
+                        restoredUsers = await JsonSerializer.DeserializeAsync<Dictionary<string, Person>>(fs);
+                    }
+                    File.Delete("user.json");
+                    using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                    {
+                        Person user = new Person() { Name = userName, Group = userGroup };
+                        restoredUsers.Add(Id, user);
+                        await JsonSerializer.SerializeAsync(fs, restoredUsers);
+                    }
+                }
+                else
+                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                {                    
+                    Person user = new Person() { Name = userName, Group = userGroup };
+                    Dictionary<string, Person> users = new();
+                    users.Add(Id, user);
+                    await JsonSerializer.SerializeAsync(fs, users);                    
                 }
             }
             catch (Exception ex)
@@ -33,17 +49,18 @@ namespace ChatServer
             }
 
         }
-        async public void readUsers()
+        async public void takeUsers()
         {
+            Dictionary<string, Person> restoredUsers = new();
             // чтение данных
             try
             {
                 using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
                 {
 
-                    Person restoredPerson = await JsonSerializer.DeserializeAsync<Person>(fs);
-                    server.BroadcastBack($"ID: {restoredPerson.id}  Name: {restoredPerson.Name}  Group: {restoredPerson.Group}\n", this.Id);
-                    server.BroadcastBack("Загрузка окончена", Id);
+                    restoredUsers = await JsonSerializer.DeserializeAsync<Dictionary<string, Person>>(fs);
+                    Users2read = restoredUsers;
+                    
                 }
             }
             catch (Exception ex)
@@ -51,7 +68,7 @@ namespace ChatServer
                 Console.WriteLine(ex);
             }
         }
-
+        
 
 
     }

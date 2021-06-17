@@ -31,43 +31,7 @@ namespace ChatServer
             serverObject.AddConnection(this);
         }
        
-         async void saveUser()
-        {
-            // сохранение данных
-            try
-            {   
-                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
-                {   
-                    Person user = new Person() { id = Id, Name = userName, Group = userGroup };
-                    await JsonSerializer.SerializeAsync<Person>(fs, user);
-                    server.BroadcastBack("Текущий пользователь был сохранен в файл", this.Id);                    
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-            }
-
-        }
-        async void readUsers() 
-        {
-            // чтение данных
-            try
-            {
-                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
-                {
-                    
-                    Person restoredPerson = await JsonSerializer.DeserializeAsync<Person>(fs);
-                    server.BroadcastBack($"ID: {restoredPerson.id}  Name: {restoredPerson.Name}  Group: {restoredPerson.Group}\n", this.Id);
-                    server.BroadcastBack("Загрузка окончена", this.Id);
-                }
-            }
-            catch(Exception ex)
-            { 
-                Console.WriteLine(ex);
-            }
-        }
-
+       
         public void Process()
         {
             try
@@ -147,49 +111,7 @@ namespace ChatServer
             if (client != null)
                 client.Close();
         }
-        /*private void menuuu()
-        {   
-            server.BroadcastBack("Введите команду", this.Id);
-
-            while (true)
-            {
-                string command = GetMessage();
-                switch (command)
-                {
-                    case "1":
-                        command = String.Format("{0}: - число запросов", k);
-                        Console.WriteLine(command);
-                        server.BroadcastBack(command, this.Id);
-                        break;
-                    case "2":
-                        k = 0;
-                        break;
-                    case "3":
-                        server.BroadcastBack(userName + " - имя пользователя", this.Id);
-                        break;
-                    case "4":
-                        server.BroadcastBack("1 - сохранение имени пользователя \n2 - чтение имён ", this.Id);
-                        command = GetMessage();
-                        if (command == "1")
-                            saveUser();
-                        if (command == "2")
-                            readUsers();
-                        break;
-                    case "5":
-                        server.BroadcastBack("Введите строку для изменения", this.Id);
-                        char[] array = GetMessage().ToCharArray();
-                        Array.Reverse(array);
-                        string str = new string(array);
-                        server.BroadcastBack(str, this.Id);
-                        break;
-                    case "6":
-                        server.BroadcastBack(ServerObject.ConnectedUsers.ToString()+" - число подключенных пользователей", this.Id);
-                        break;
-                 
-
-                }
-            }
-        } */
+        
         
     }
 }
