@@ -5,16 +5,27 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading;
+using System.Globalization;
 
 namespace ChatServer
 {
     public class ServerObject
     {
         static TcpListener tcpListener; //сервер для прослушивания
-        List<ClientObject> clients = new List<ClientObject>(); // все подключения 
+        List<ClientObject> clients = new List<ClientObject>(); // все подключения
+        static private int connectedUsers = 0; //счетчик подключенных клиентов (в данный момент)
+        static public int ConnectedUsers
+        {
+            get
+            {
+                return connectedUsers;
+            }
+        }
+        public static DateTime Now { get; }
         protected internal void AddConnection(ClientObject clientObject)
         {
             clients.Add(clientObject);
+            connectedUsers++;
         }
         protected internal void RemoveConnection(string id)
         {
@@ -24,7 +35,7 @@ namespace ChatServer
             // и удалеяем его из списка подключений 
             if (client != null)
                 clients.Remove(client);
-            
+            connectedUsers--;
         }
         // прослушивание входящих подключений
         protected internal void Listen()
@@ -38,7 +49,6 @@ namespace ChatServer
                 while (true)
                 {
                     TcpClient tcpClient = tcpListener.AcceptTcpClient();
-
                     ClientObject clientObject = new ClientObject(tcpClient, this);
                     Thread clientThread = new Thread(new ThreadStart(clientObject.Process));
                     clientThread.Start();
@@ -54,6 +64,7 @@ namespace ChatServer
         //трансляция сообщения подключенным клиентам
         protected internal void BroadcastMessage(string message, string id)
         {
+            
             byte[] data = Encoding.Unicode.GetBytes(message);
             for (int i=0;i<clients.Count;i++)
             {
@@ -63,8 +74,23 @@ namespace ChatServer
                 }    
             }
         }
+        protected internal void BroadcastBack(string message, string id)
+        {
+            for (int i = 0; i < clients.Count; i++)
+            {
+                byte[] data = Encoding.Unicode.GetBytes(message);
+
+                if (clients[i].Id == id) // если id клиента равно id отправляющего
+                {
+                    clients[i].Stream.Write(data, 0, data.Length); // передача данных
+                }
+            }
+        }
+
+
+
 // отключение всех клиентов-
-protected internal void Disconnect()
+        protected internal void Disconnect()
         {
             tcpListener.Stop(); // остановка сервера
             for (int i = 0; i<clients.Count;i++)
@@ -73,5 +99,10 @@ protected internal void Disconnect()
             }
             Environment.Exit(0); // завершение процесса
         }
+    
+    
+    
+    
+    
     }
 }

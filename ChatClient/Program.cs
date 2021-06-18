@@ -8,6 +8,7 @@ namespace ChatClient
     class Program
     {
         static string userName;
+        static string group;
         private const string host = "127.0.0.1";
         private const int port = 8888;
         static TcpClient client;
@@ -15,6 +16,7 @@ namespace ChatClient
 
         static void Main(string[] args)
         {
+            
             Console.Write("Введите своё имя: ");
             userName = Console.ReadLine();
             client = new TcpClient();
@@ -27,10 +29,16 @@ namespace ChatClient
                 byte[] data = Encoding.Unicode.GetBytes(message);
                 stream.Write(data, 0, data.Length);
 
+                Console.Write("Введите свою группу: ");
+                group = Console.ReadLine();
+                message = group;
+                data = Encoding.Unicode.GetBytes(message);
+                stream.Write(data, 0, data.Length);
+
                 // запускаем новый поток для получения данных
                 Thread receiveThread = new Thread(new ThreadStart(ReceiveMessage));
                 receiveThread.Start(); // старт потока
-                Console.WriteLine("Добро пожаловать, {0}", userName);
+                Console.WriteLine("Добро пожаловать, {0} из группы: {1}", userName, group);
                 SendMessage();
             }
             catch(Exception ex)
@@ -45,7 +53,7 @@ namespace ChatClient
         //отправка сообщений
         static void SendMessage()
         {
-            Console.WriteLine("Введите сообщение: ");
+            
 
             while (true)
             {
