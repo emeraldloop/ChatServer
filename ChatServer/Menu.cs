@@ -50,12 +50,13 @@ namespace ChatServer
                             if (command == "2")
                             {   
                                 
-                                utility.takeUsers();
-                                foreach (Person p in utility.Users2read.Values)
+                                utility.takeUsers(Stream);
+
+                                /*foreach (Person p in utility.Users2read.Values)
                                 {
                                     server.BroadcastBack(String.Format($"Имя: {1}, Группа: {2}\n", p.Name, p.Group), Id);
-                                }
-                                server.BroadcastBack("Загрузка окончена \n", Id);
+                                } 
+                                server.BroadcastBack("Загрузка окончена \n", Id); */
                             }
                             complete = true;
                             break;

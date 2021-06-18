@@ -11,7 +11,7 @@ namespace ChatServer
 {
     class Utilities
     {
-        public Dictionary<string, Person> Users2read = new();
+
         async public void saveUser(string Id, string userName,string userGroup)
         {
             Dictionary<string, Person> restoredUsers = new();
@@ -49,7 +49,7 @@ namespace ChatServer
             }
 
         }
-        async public void takeUsers()
+        async public void takeUsers(NetworkStream Stream)
         {
             Dictionary<string, Person> restoredUsers = new();
             // чтение данных
@@ -59,9 +59,18 @@ namespace ChatServer
                 {
 
                     restoredUsers = await JsonSerializer.DeserializeAsync<Dictionary<string, Person>>(fs);
-                    Users2read = restoredUsers;
-                    
+
+                    foreach (Person p in restoredUsers.Values)
+                    {
+                        byte[] data = Encoding.Unicode.GetBytes("Имя: "+ p.Name+" Группа: "+ p.Group+"\n");
+                        Stream.Write(data, 0, data.Length); // передача данных
+                    }
+                    byte[] data2 = Encoding.Unicode.GetBytes("Сообщение отправлено");
+                    Stream.Write(data2, 0, data2.Length);
+
+
                 }
+                
             }
             catch (Exception ex)
             {
