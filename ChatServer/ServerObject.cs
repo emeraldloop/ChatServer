@@ -21,7 +21,6 @@ namespace ChatServer
                 return connectedUsers;
             }
         }
-        public static DateTime Now { get; }
         protected internal void AddConnection(ClientObject clientObject)
         {
             clients.Add(clientObject);

@@ -60,15 +60,11 @@ namespace ChatServer
 
                     restoredUsers = await JsonSerializer.DeserializeAsync<Dictionary<string, Person>>(fs);
 
-                    foreach (Person p in restoredUsers.Values)
+                    foreach (KeyValuePair<string, Person> dict in restoredUsers)
                     {
-                        byte[] data = Encoding.Unicode.GetBytes("Имя: "+ p.Name+" Группа: "+ p.Group+"\n");
+                        byte[] data = Encoding.Unicode.GetBytes("Id: "+ dict.Key+" Имя: " + dict.Value.Name + " Группа: " + dict.Value.Group + "\n");
                         Stream.Write(data, 0, data.Length); // передача данных
                     }
-                    byte[] data2 = Encoding.Unicode.GetBytes("Сообщение отправлено");
-                    Stream.Write(data2, 0, data2.Length);
-
-
                 }
                 
             }
@@ -77,7 +73,39 @@ namespace ChatServer
                 Console.WriteLine(ex);
             }
         }
-        
+
+        async public void deleteUser(String Id2del)
+        {
+            Dictionary<string, Person> restoredUsers = new();
+            // чтение данных
+            try
+            {
+                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                {
+
+                    restoredUsers = await JsonSerializer.DeserializeAsync<Dictionary<string, Person>>(fs);
+                    if (restoredUsers.ContainsKey(Id2del))
+                        restoredUsers.Remove(Id2del);
+                }
+                File.Delete("user.json");
+                using (FileStream fs = new FileStream("user.json", FileMode.OpenOrCreate))
+                {
+                    await JsonSerializer.SerializeAsync(fs, restoredUsers);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+
+
+
+
+
+
+
 
 
     }

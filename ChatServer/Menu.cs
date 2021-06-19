@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ChatServer
 {
     class Menu
     {
-
+        
+        
         public void choosecommand(string Id, string userName, string userGroup, ref ServerObject server, ref TcpClient client, NetworkStream Stream)
         {
             try
@@ -48,15 +50,10 @@ namespace ChatServer
                                 server.BroadcastBack("Текущий пользователь был сохранен в файл", Id);
                             }
                             if (command == "2")
-                            {   
-                                
+                            {                                   
                                 utility.takeUsers(Stream);
-
-                                /*foreach (Person p in utility.Users2read.Values)
-                                {
-                                    server.BroadcastBack(String.Format($"Имя: {1}, Группа: {2}\n", p.Name, p.Group), Id);
-                                } 
-                                server.BroadcastBack("Загрузка окончена \n", Id); */
+                                Thread.Sleep(1000);
+                                server.BroadcastBack("Загрузка окончена", Id);
                             }
                             complete = true;
                             break;
@@ -72,7 +69,22 @@ namespace ChatServer
                             server.BroadcastBack((ServerObject.ConnectedUsers - 1).ToString() + " - число подключенных пользователей", Id);
                             complete = true;
                             break;
-
+                        case "7":
+                            server.BroadcastBack(DateTime.Now.ToString("HH:mm:ss") + " - текущее время\n", Id);
+                            complete = true;
+                            break;
+                        case "8":
+                            string Id2del;
+                            utility.takeUsers(Stream);
+                            Thread.Sleep(1000);
+                            server.BroadcastBack("Введите идентификатор клиента для удаления", Id);
+                            Id2del = Client.GetMessage();
+                            server.BroadcastBack("Вы были удалены", Id2del);
+                            server.RemoveConnection(Id2del);
+                            utility.deleteUser(Id2del);
+                            server.BroadcastBack("Готово", Id);
+                            complete = true;                            
+                            break;
 
                     }
                 
