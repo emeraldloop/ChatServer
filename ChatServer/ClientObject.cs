@@ -101,7 +101,22 @@ namespace ChatServer
 
             return builder.ToString();
         }
-
+        public byte[] GetHash()
+        {
+            k++;
+            byte[] data = new byte[64]; //буфер для получаемых данных
+            StringBuilder builder = new StringBuilder();
+            int bytes = 0;
+            do
+            {
+                bytes = Stream.Read(data, 0, data.Length);
+                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+            }
+            while (Stream.DataAvailable);
+            byte[] byteArray = ASCIIEncoding.ASCII.GetBytes(builder.ToString()); // переводим stringbuilder(хеш) в байтовый массив
+            return byteArray;
+        }
+        
 
         // закрытие подключения
         protected internal void Close()

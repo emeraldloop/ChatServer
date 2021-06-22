@@ -85,7 +85,12 @@ namespace ChatServer
                             server.BroadcastBack("Готово", Id);
                             complete = true;                            
                             break;
+// 9/10 задания уже выполнены в разделе 4
+                        case "11":
+                            utility.GetTime(Stream);
 
+                            complete = true;
+                            break;
                     }
                 
                 }

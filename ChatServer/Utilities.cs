@@ -62,8 +62,8 @@ namespace ChatServer
 
                     foreach (KeyValuePair<string, Person> dict in restoredUsers)
                     {
-                        byte[] data = Encoding.Unicode.GetBytes("Id: "+ dict.Key+" Имя: " + dict.Value.Name + " Группа: " + dict.Value.Group + "\n");
-                        Stream.Write(data, 0, data.Length); // передача данных
+                        string message = "Id: " + dict.Key + " Имя: " + dict.Value.Name + " Группа: " + dict.Value.Group + "\n";
+                        Broadcast(message,Stream);                        
                     }
                 }
                 
@@ -100,7 +100,20 @@ namespace ChatServer
             }
         }
 
-
+         async public void GetTime(NetworkStream Stream)
+         {
+            while(true)
+            {
+                Broadcast(DateTime.Now.ToString(),Stream);
+                await Task.Delay(5000);
+                
+            }
+         }
+        private void Broadcast(string message, NetworkStream Stream)
+        {
+            byte[] data = Encoding.Unicode.GetBytes(message);
+            Stream.Write(data, 0, data.Length); // передача данных
+        }
 
 
 
