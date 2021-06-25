@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Net.Sockets;
 using System.Text;
+using System.Security.Cryptography;
 
 namespace ChatClient
 {
@@ -13,6 +14,7 @@ namespace ChatClient
         private const int port = 8888;
         static TcpClient client;
         static NetworkStream stream;
+        
 
         static void Main(string[] args)
         {
@@ -25,15 +27,18 @@ namespace ChatClient
                 client.Connect(host, port); //подключение клиента
                 stream = client.GetStream();  // получаем поток
 
-                string message = userName;
+                string message = userName+"_"+ userName.Length.ToString() + "_"+ GetHashMessage(userName);
                 byte[] data = Encoding.Unicode.GetBytes(message);
-                stream.Write(data, 0, data.Length);
+                stream.Write(data, 0, data.Length); //отправили имя + _длину имени_ + хеш имени
 
                 Console.Write("Введите свою группу: ");
                 group = Console.ReadLine();
-                message = group;
+                message = group + "_" + group.Length.ToString() + "_" + GetHashMessage(group);
+
                 data = Encoding.Unicode.GetBytes(message);
-                stream.Write(data, 0, data.Length);
+                stream.Write(data, 0, data.Length); // отправили группу + _длину группы_ + хеш группы
+
+
 
                 // запускаем новый поток для получения данных
                 Thread receiveThread = new Thread(new ThreadStart(ReceiveMessage));
@@ -58,8 +63,11 @@ namespace ChatClient
             while (true)
             {
                 string message = Console.ReadLine();
-                byte[] data = Encoding.Unicode.GetBytes(message);
-                stream.Write(data, 0, data.Length);
+                message = message + "_" + message.Length.ToString() + "_" + GetHashMessage(message); 
+                byte[] data = Encoding.Unicode.GetBytes(message); // отправили сообщение + _длину сообщения_ + хеш сообщения
+                stream.Write(data, 0, data.Length); // отправка сообщения
+               
+
             }
         }
         // получение сообщений
@@ -91,7 +99,7 @@ namespace ChatClient
             }
         }
 
-static void Disconnect()
+        static void Disconnect()
         {
             if (stream != null)
                 stream.Close(); // отключение потока
@@ -99,5 +107,27 @@ static void Disconnect()
                 client.Close(); // отключение клиента 
             Environment.Exit(0); // завершение процесса
         }
+
+        public static string GetHashMessage(string message)
+        {
+
+            byte[] newhash;
+            UnicodeEncoding ue = new();
+            byte[] messageBytes = ue.GetBytes(message); // переводим строку в байты
+
+            SHA256 shHash = SHA256.Create();
+            newhash = shHash.ComputeHash(messageBytes); // переводим байты в хеш
+
+            StringBuilder builder = new StringBuilder();
+
+            foreach (byte b in newhash)
+            {
+                builder.Append(b + " ");
+            }
+            string hash = builder.ToString();
+            hash.Remove(hash.Length - 1);
+            return hash;
+        }
+
     }
 }

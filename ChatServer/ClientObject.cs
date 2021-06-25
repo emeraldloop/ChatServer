@@ -2,14 +2,16 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-
+using System.Threading;
 
 namespace ChatServer
 {
     public class ClientObject
     {
+        
         Menu menu = new();
         protected internal string Id { get; private set; }
         public NetworkStream Stream { get; set; }
@@ -36,6 +38,7 @@ namespace ChatServer
         {
             try
             {
+                
                 Stream = client.GetStream(); //получаем имя и группу пользователя
                 string message = GetMessage();
                 userName = message;
@@ -46,11 +49,12 @@ namespace ChatServer
                 Console.WriteLine(message); // в бесконечном цикле получаем сообщения от клиента                
                 while (true)
                 {
-                    //string Id, string userName, string userGroup, ref ServerObject server, ref TcpClient client, ref NetworkStream Stream
+                    
                     server.BroadcastBack("\nВведите сообщение/ команду menu", this.Id);
                     try
                     {   
                         message = GetMessage();
+                        
                         if (message == "menu") // команды
                         {
                             menu.choosecommand( Id,userName, userGroup, ref server, ref client, Stream);
@@ -59,7 +63,7 @@ namespace ChatServer
                         {
                             message = String.Format("{0}: {1}", userName, message);
                             Console.WriteLine(message);
-                            server.BroadcastMessage(message, this.Id);
+                            server.BroadcastMessage(message, this.Id);                            
                         }
                        
                     }
@@ -84,25 +88,124 @@ namespace ChatServer
             }
         }
 
-        // чтение входящего сообщения и преобразование в строку
-        public string GetMessage()
-        {   
-            
-            k++;
-            byte[] data = new byte[64]; //буфер для получаемых данных
-            StringBuilder builder = new StringBuilder();
-            int bytes = 0;
-            do
-            {
-                bytes = Stream.Read(data, 0, data.Length);
-                builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
-            }
-            while (Stream.DataAvailable);
+                                                       // Ниже идут вспомогательные методы
 
-            return builder.ToString();
+        
+        public string GetMessage()
+        {
+            try
+            {
+                //чтение входящего сообщения и преобразование в строку (с проверкой!)
+                k++; //счётчик запросов для команды №1 из меню
+
+                byte[] data = new byte[64]; //буфер для получаемых данных
+                StringBuilder builder = new StringBuilder();
+                int bytes = 0;
+
+                do              // получаем сообщение
+                {
+                    bytes = Stream.Read(data, 0, data.Length);
+                    builder.Append(Encoding.Unicode.GetString(data, 0, bytes));
+                }
+                while (Stream.DataAvailable);
+                string fullmessage = builder.ToString(); // полученное сообщение вместе с длинной и хешем
+
+
+                builder.Clear();         
+                for (int i = 0; i <fullmessage.IndexOf("_");i++)
+                {
+                    builder.Append(fullmessage[i]);
+                }
+                string message = builder.ToString(); //беру сообщение из fullmessage
+
+                builder.Clear();
+                for (int i = fullmessage.IndexOf("_")+1; i < fullmessage.LastIndexOf("_"); i++)
+                {
+                    builder.Append(fullmessage[i]);
+                }
+                string receivedLength = builder.ToString(); //беру длину из fullmessage
+
+                builder.Clear();
+                for (int i = fullmessage.LastIndexOf("_") + 1; i < fullmessage.Length; i++)
+                {
+                    builder.Append(fullmessage[i]);
+                }
+                string receivedHash = builder.ToString(); //беру хеш из fullmessage
+
+
+
+
+
+
+
+
+                 if (CheckIntegrity(receivedHash,receivedLength, message) == true)
+                     return message;
+                 else
+                     return "Целостность нарушена"; 
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                return "123";
+            }
+            
         }
 
 
+        //получение хеша из полученного сообщения
+        public string GetHashMessage(string message)
+        {
+
+            byte[] newhash;
+            UnicodeEncoding ue = new();
+            byte[] messageBytes = ue.GetBytes(message); // переводим строку в байты
+
+            SHA256 shHash = SHA256.Create();
+            newhash = shHash.ComputeHash(messageBytes); // переводим байты в хеш
+
+            StringBuilder builder = new StringBuilder();
+
+            foreach (byte b in newhash)
+            {
+                builder.Append(b + " ");
+            }
+            string hash = builder.ToString();
+            hash.Remove(hash.Length - 1);
+            return hash;
+
+        }
+
+        private bool CheckIntegrity(string receivedHash, string receivedLength, string message )
+        {
+            /* если целостность не нарушена - он возвращает true
+               если цел-ть нарушена, то он вернёт false */
+
+            string newhash = GetHashMessage(message); //хешируем полученное сообщение
+            string newLength = message.Length.ToString(); // получаем длину из полученного сообщения
+
+
+            bool same = true;
+
+            //Сравнение значений двух длин
+            int result = String.Compare(receivedLength, newLength);
+            if (result != 0)
+                same = false;
+
+            //Сравнение значений двух хешей
+            result = String.Compare(receivedHash, newhash);
+            if (result != 0)
+                same = false;
+
+
+
+
+
+
+
+
+            return same;
+        }
         // закрытие подключения
         protected internal void Close()
         {
